@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "499356205487",
+    "project_id": "safestreetibm",
+    "storage_bucket": "safestreetibm.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:499356205487:android:05632c22cce35703c1af5a",
+        "android_client_info": {
+          "package_name": "com.example.safestreet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbynm_0o-mzeburpJbj0YfG_72-elt8RE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
