@@ -38,6 +38,11 @@ dependencies:
   cupertino_icons: ^1.0.6
   firebase_core: ^3.1.1
   firebase_auth: ^5.1.1
+  intl: ^0.19.0
+  shared_preferences: ^2.0.15
+  vibration: ^1.7.5
+  contacts_service: ^0.6.1
+  permission_handler: ^10.2.0
 
 dev_dependencies:
   flutter_test:
@@ -50,9 +55,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^4.0.0
   google_maps_flutter: ^2.1.1
-  intl: ^0.19.0
-  shared_preferences: ^2.0.15
-  vibration: ^1.7.5
+  
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
