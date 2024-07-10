@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -7,6 +8,7 @@ import 'package:background_sms/background_sms.dart';
 import 'package:safestreet/pages/intro.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:contacts_service/contacts_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class SosPage extends StatefulWidget {
   @override
@@ -20,13 +22,41 @@ class _SosPageState extends State<SosPage> {
   void initState() {
     super.initState();
     _getContactsPermission();
+    _getLocationPermission();
     _loadSelectedContacts();
   }
 
+  Future<void> _getLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      Fluttertoast.showToast(msg: 'Location services are disabled');
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        Fluttertoast.showToast(msg: 'Location permissions are denied');
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      Fluttertoast.showToast(
+          msg: 'Location permissions are permanently denied');
+      return;
+    }
+  }
+
   Future<void> _getContactsPermission() async {
-    PermissionStatus permission = await Permission.sms.status;
+    PermissionStatus permission = await Permission.contacts.status;
     if (permission != PermissionStatus.granted) {
-      permission = await Permission.sms.request();
+      permission = await Permission.contacts.request();
+      if (permission != PermissionStatus.granted) {
+        Fluttertoast.showToast(msg: 'Contacts permissions are denied');
+        return;
+      }
     }
   }
 
@@ -47,16 +77,17 @@ class _SosPageState extends State<SosPage> {
     }
   }
 
-  void sendMessageToAll() {
+  void sendMessageToAll(Position position) {
+    String message =
+        'SOS! I need some help. Here is my location: https://www.google.com/maps/search/?api=1&query=${position.latitude},${position.longitude}';
     for (Contact contact in _selectedContacts) {
       for (Item phone in contact.phones ?? []) {
-        sendMessagee(phone.value!,
-            "SOS message with location"); // Customize your message
+        sendMessage(phone.value!, message); // Send message to each contact
       }
     }
   }
 
-  void sendMessagee(String phoneNumber, String message) {
+  void sendMessage(String phoneNumber, String message) {
     BackgroundSms.sendMessage(phoneNumber: phoneNumber, message: message)
         .then((SmsStatus status) {
       if (status == SmsStatus.sent) {
@@ -85,9 +116,9 @@ class _SosPageState extends State<SosPage> {
               child: Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop(); // Close the dialog
-                sendMessageToAll(); // Send the messages
+                await _sendSOS(); // Send the SOS messages
               },
               child: Text('Confirm'),
             ),
@@ -95,6 +126,20 @@ class _SosPageState extends State<SosPage> {
         );
       },
     );
+  }
+
+  Future<void> _sendSOS() async {
+    if (_selectedContacts.isEmpty) {
+      Fluttertoast.showToast(msg: 'No contacts selected.');
+      return;
+    }
+
+    try {
+      Position position = await Geolocator.getCurrentPosition();
+      sendMessageToAll(position);
+    } catch (e) {
+      Fluttertoast.showToast(msg: "Error: $e");
+    }
   }
 
   @override
@@ -112,48 +157,45 @@ class _SosPageState extends State<SosPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
+                SizedBox(height: 110),
                 ElevatedButton(
                   onPressed: _showConfirmationDialog,
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.red,
-                    padding: EdgeInsets.all(
-                        100), // Increased padding for larger size
+                    padding: EdgeInsets.all(100), // Adjusted padding
                     shape: CircleBorder(),
                   ),
                   child: Text(
                     'SOS',
                     style: TextStyle(
-                      fontSize: 50, // Increased font size
+                      fontSize: 50,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                SizedBox(height: 50),
+                SizedBox(height: 30),
                 Card(
                   elevation: 4,
-                  margin: EdgeInsets.all(16.0),
+                  margin: EdgeInsets.symmetric(horizontal: 16.0),
                   color: brownn,
                   shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(40), // Adjust the value as needed
+                    borderRadius: BorderRadius.circular(15),
                   ),
                   child: Container(
-                    color: brownn, // Background color for the entire card
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        'Immediately send your location to your safe contacts',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Immediately send your location to your safe contacts',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
+                SizedBox(height: 180),
               ],
             ),
           ),
