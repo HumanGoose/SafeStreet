@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:background_sms/background_sms.dart';
 
@@ -11,63 +9,26 @@ class SosPage extends StatefulWidget {
 }
 
 class _SosPageState extends State<SosPage> {
-  Position? _currentPosition;
-  String? _currentAddress;
-  LocationPermission? _permission;
-
   @override
   void initState() {
     super.initState();
-    _getPermission();
+    _getContactsPermission();
   }
 
-  _getPermission() async {
-    _permission = await Geolocator.checkPermission();
-    if (_permission == LocationPermission.denied) {
-      _permission = await Geolocator.requestPermission();
-      if (_permission == LocationPermission.deniedForever) {
-        Fluttertoast.showToast(msg: "Location permission permanently denied");
-      }
+  Future<void> _getContactsPermission() async {
+    PermissionStatus permission = await Permission.sms.status;
+    if (permission != PermissionStatus.granted) {
+      permission = await Permission.sms.request();
     }
-    if (_permission == LocationPermission.whileInUse ||
-        _permission == LocationPermission.always) {
-      _getCurrentLocation();
+    if (permission == PermissionStatus.granted) {
+      // Permission granted, you can proceed
+    } else {
+      // Handle if permission is denied
     }
   }
 
-  _getCurrentLocation() async {
-    try {
-      _currentPosition = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-      if (_currentPosition != null) {
-        _getAddressfromLatLong();
-      } else {
-        Fluttertoast.showToast(msg: "Unable to fetch location");
-      }
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-    }
-  }
-
-  _getAddressfromLatLong() async {
-    try {
-      double lat = _currentPosition!.latitude;
-      double lon = _currentPosition!.longitude;
-      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lon);
-      Placemark place = placemarks[0];
-
-      setState(() {
-        _currentAddress =
-            "${place.locality},${place.street},${place.postalCode}";
-      });
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-    }
-  }
-
-  void _sendSms(String phoneNumber, String message) async {
-    await BackgroundSms.sendMessage(phoneNumber: phoneNumber, message: message)
+  sendMessagee(String phoneNumber, String message) {
+    BackgroundSms.sendMessage(phoneNumber: phoneNumber, message: message)
         .then((SmsStatus status) {
       if (status == SmsStatus.sent) {
         Fluttertoast.showToast(msg: "Message sent successfully");
@@ -79,16 +40,15 @@ class _SosPageState extends State<SosPage> {
     });
   }
 
-  void sendMessage() {
-    _sendSms("8296853488", "Test SOS message");
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: ElevatedButton(
-          onPressed: sendMessage,
+          onPressed: () {
+            // Corrected onPressed handler
+            sendMessagee("8296853488", "Whats up bro");
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             foregroundColor: Colors.white,
@@ -98,7 +58,7 @@ class _SosPageState extends State<SosPage> {
               fontWeight: FontWeight.bold,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10), // Rounded corners
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
           child: Text('Send SOS'),
