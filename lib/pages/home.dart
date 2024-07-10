@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
-import 'contacts_page.dart'; // Import the new contacts page
+import 'contacts_page.dart';
+import 'sos_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -146,14 +147,14 @@ class MapPage extends StatelessWidget {
   }
 }
 
-class SosPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('SOS Page'),
-    );
-  }
-}
+// class SosPage extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Center(
+//       child: Text('SOS Page'),
+//     );
+//   }
+// }
 
 class StreePage extends StatelessWidget {
   @override
