@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:contacts_service/contacts_service.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:safestreet/pages/intro.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vibration/vibration.dart'; // Import vibration package
 
@@ -148,43 +149,69 @@ class _ContactsPageState extends State<ContactsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Add up to 5 contacts to whom your location would be sent in times of emergency:',
-            style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-          SizedBox(height: 20),
-          ..._selectedContacts.map((contact) {
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 8.0),
-              child: ListTile(
-                title: Text(contact.displayName ?? ''),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
-                  onPressed: () {
-                    _deleteContact(contact); // Call delete function
-                  },
+    return Card(
+      elevation: 4,
+      margin: EdgeInsets.all(16.0),
+      color: yelloww,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center, // Center align content
+          children: [
+            Center(
+              child: Text(
+                'Select up to 5 contacts to whom your location would be sent in times of emergency:',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
+                textAlign: TextAlign.center, // Optionally, center align text
               ),
-            );
-          }).toList(),
-          SizedBox(height: 20),
-          Center(
-            child: ElevatedButton(
-              onPressed: _pickContact,
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                textStyle: TextStyle(fontSize: 16),
-              ),
-              child: Text('Add Contact'),
             ),
-          ),
-        ],
+            SizedBox(height: 20),
+            ..._selectedContacts.map((contact) {
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8.0),
+                color: brownn,
+                child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.0), // Adjust horizontal padding
+                  title: Text(
+                    contact.displayName ?? '',
+                    style: TextStyle(color: yelloww),
+                  ),
+                  trailing: IconButton(
+                    padding:
+                        EdgeInsets.zero, // Remove padding around IconButton
+                    icon: Icon(Icons.delete,
+                        color: Color.fromARGB(255, 180, 27, 16)),
+                    onPressed: () {
+                      _deleteContact(contact);
+                    },
+                  ),
+                ),
+              );
+            }).toList(),
+            SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                onPressed: _pickContact,
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  backgroundColor: Color.fromARGB(255, 36, 17, 5),
+                  foregroundColor: Colors.white,
+                  textStyle: TextStyle(fontSize: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text('Add Contact'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
