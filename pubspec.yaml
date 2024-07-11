@@ -44,6 +44,7 @@ dependencies:
   geolocator: ^8.2.0
   geocoding: ^2.0.4
   google_maps_flutter: ^2.7.0
+  google_place: ^0.4.7
 
 
 dev_dependencies:
