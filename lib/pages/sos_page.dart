@@ -24,6 +24,18 @@ class _SosPageState extends State<SosPage> {
     _getContactsPermission();
     _getLocationPermission();
     _loadSelectedContacts();
+    _getSmsPermission();
+  }
+
+  Future<void> _getSmsPermission() async {
+    PermissionStatus permission = await Permission.sms.status;
+    if (permission != PermissionStatus.granted) {
+      permission = await Permission.sms.request();
+      if (permission != PermissionStatus.granted) {
+        Fluttertoast.showToast(msg: 'SMS permissions are denied');
+        return;
+      }
+    }
   }
 
   Future<void> _getLocationPermission() async {
@@ -93,7 +105,7 @@ class _SosPageState extends State<SosPage> {
       if (status == SmsStatus.sent) {
         Fluttertoast.showToast(msg: "Message sent successfully");
       } else {
-        Fluttertoast.showToast(msg: "Failed to send message");
+        Fluttertoast.showToast(msg: "Failed to send message $status");
       }
     }).catchError((error) {
       Fluttertoast.showToast(msg: "Error: $error");

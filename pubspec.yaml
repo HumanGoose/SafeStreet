@@ -43,13 +43,13 @@ dependencies:
   fluttertoast: ^8.2.6
   geolocator: ^8.2.0
   geocoding: ^2.0.4
+  google_maps_flutter: ^2.7.0
 
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  google_maps_flutter: ^2.1.1
   
 
 # For information on the generic Dart part of this file, see the

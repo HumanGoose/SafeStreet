@@ -5,7 +5,8 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:safestreet/pages/intro.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vibration/vibration.dart'; // Import vibration package
+import 'package:vibration/vibration.dart';
+import 'package:safestreet/main.dart';
 
 class ContactsPage extends StatefulWidget {
   @override
@@ -55,7 +56,6 @@ class _ContactsPageState extends State<ContactsPage> {
         }).toList();
       });
     }
-    _loadContacts();
   }
 
   Future<void> _saveSelectedContacts() async {
@@ -89,9 +89,10 @@ class _ContactsPageState extends State<ContactsPage> {
     if (contact != null && !_isDuplicate(contact)) {
       setState(() {
         _selectedContacts.add(contact);
+        _contacts
+            .remove(contact); // Remove selected contact from available list
       });
-      _saveSelectedContacts(); // Save contacts without vibration
-      _loadContacts(); // Refresh the available contacts list
+      _saveSelectedContacts();
     } else if (contact != null) {
       _showDuplicateContactDialog();
     }
@@ -135,13 +136,12 @@ class _ContactsPageState extends State<ContactsPage> {
   Future<void> _deleteContact(Contact contact) async {
     setState(() {
       _selectedContacts.remove(contact);
+      _contacts.add(contact); // Add back to available list when deleted
     });
-    _saveSelectedContacts(); // Save contacts without vibration
-    _loadContacts(); // Refresh the available contacts list
+    _saveSelectedContacts();
 
     // Vibrate for a short duration (100 milliseconds) when deleting contact
-    bool hasVibrator =
-        await Vibration.hasVibrator() ?? false; // Default to false if null
+    bool hasVibrator = await Vibration.hasVibrator() ?? false;
     if (hasVibrator) {
       Vibration.vibrate(duration: 100);
     }
@@ -156,7 +156,7 @@ class _ContactsPageState extends State<ContactsPage> {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center, // Center align content
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Center(
               child: Text(
@@ -166,7 +166,7 @@ class _ContactsPageState extends State<ContactsPage> {
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
-                textAlign: TextAlign.center, // Optionally, center align text
+                textAlign: TextAlign.center,
               ),
             ),
             SizedBox(height: 20),
@@ -175,15 +175,13 @@ class _ContactsPageState extends State<ContactsPage> {
                 margin: const EdgeInsets.symmetric(vertical: 8.0),
                 color: brownn,
                 child: ListTile(
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.0), // Adjust horizontal padding
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
                   title: Text(
                     contact.displayName ?? '',
                     style: TextStyle(color: yelloww),
                   ),
                   trailing: IconButton(
-                    padding:
-                        EdgeInsets.zero, // Remove padding around IconButton
+                    padding: EdgeInsets.zero,
                     icon: Icon(Icons.delete,
                         color: Color.fromARGB(255, 180, 27, 16)),
                     onPressed: () {
