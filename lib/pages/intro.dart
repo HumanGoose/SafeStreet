@@ -28,7 +28,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
             borderRadius: BorderRadius.circular(16.0),
           ),
           elevation: 4,
-          backgroundColor: Colors.white,
+          backgroundColor: yelloww,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -54,7 +54,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                     },
                     child: Text('OK'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: yelloww,
+                      backgroundColor: brownn,
                       shape: RoundedRectangleBorder(
                         borderRadius:
                             BorderRadius.circular(10), // Rounded corners
@@ -167,7 +167,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                 count: 7,
                 effect: WormEffect(
                   dotColor: Colors.grey,
-                  activeDotColor: Colors.white,
+                  activeDotColor: yelloww,
                   dotHeight: 12,
                   dotWidth: 12,
                 ),
@@ -187,13 +187,13 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
   }) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.0), // Add horizontal padding
-      color: backgroundColor,
+      color: brownn,
       child: Center(
         child: SizedBox(
           height: maxCardHeight,
           width: maxCardWidth,
           child: Card(
-            color: Colors.white,
+            color: yelloww,
             elevation: 4,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),

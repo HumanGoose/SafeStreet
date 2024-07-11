@@ -18,6 +18,12 @@ class _ReportPageState extends State<ReportPage> {
   Marker? _selectedMarker;
   LatLng? _selectedLatLng;
   late GoogleMapController _mapController;
+  bool _showReportCard = false;
+  Map<String, bool> _reportOptions = {
+    'Catcalling': false,
+    'Stalking': false,
+    'No Streetlamps': false,
+  };
 
   @override
   void initState() {
@@ -94,38 +100,110 @@ class _ReportPageState extends State<ReportPage> {
         position: position,
       );
       _selectedLatLng = position;
+      _showReportCard = false;
     });
+  }
+
+  void _showReportDialog() {
+    setState(() {
+      _showReportCard = true;
+    });
+  }
+
+  void _submitReport() {
+    setState(() {
+      _showReportCard = false;
+    });
+    Fluttertoast.showToast(
+        msg: 'Successfully Reported! Thank you for making the world safer!');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _locationServiceEnabled && _locationPermissionGranted
-              ? Column(
-                  children: [
-                    Expanded(
-                      child: GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: _initialCameraPosition!,
-                          zoom: 18,
-                        ),
-                        myLocationEnabled: true,
-                        myLocationButtonEnabled: true,
-                        markers:
-                            _selectedMarker != null ? {_selectedMarker!} : {},
-                        onTap: _onMapTapped,
-                        onMapCreated: (controller) {
-                          _mapController = controller;
-                        },
+      body: Stack(
+        children: [
+          _isLoading
+              ? Center(child: CircularProgressIndicator())
+              : _locationServiceEnabled && _locationPermissionGranted
+                  ? GoogleMap(
+                      initialCameraPosition: CameraPosition(
+                        target: _initialCameraPosition!,
+                        zoom: 18,
                       ),
+                      myLocationEnabled: true,
+                      myLocationButtonEnabled: true,
+                      markers:
+                          _selectedMarker != null ? {_selectedMarker!} : {},
+                      onTap: _onMapTapped,
+                      onMapCreated: (controller) {
+                        _mapController = controller;
+                      },
+                    )
+                  : Center(
+                      child: Text('Location permissions are not granted'),
                     ),
-                  ],
-                )
-              : Center(
-                  child: Text('Location permissions are not granted'),
+          if (_selectedMarker != null)
+            Positioned(
+              bottom: 20,
+              left: MediaQuery.of(context).size.width / 2 - 28,
+              child: FloatingActionButton(
+                onPressed: _showReportDialog,
+                child: Icon(Icons.report),
+              ),
+            ),
+          if (_showReportCard)
+            Center(
+              child: Card(
+                margin: const EdgeInsets.all(16.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16.0),
                 ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Why do you want to report this area?',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      ..._reportOptions.keys.map((String key) {
+                        return CheckboxListTile(
+                          title: Text(key),
+                          value: _reportOptions[key],
+                          onChanged: (bool? value) {
+                            setState(() {
+                              _reportOptions[key] = value!;
+                            });
+                          },
+                        );
+                      }).toList(),
+                      SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: _submitReport,
+                        child: Text('Submit'),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 24.0,
+                            vertical: 12.0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
