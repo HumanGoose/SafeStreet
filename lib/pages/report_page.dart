@@ -1,95 +1,147 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class ReportPage extends StatefulWidget {
+  const ReportPage({Key? key}) : super(key: key);
+
   @override
-  _ReportPageState createState() => _ReportPageState();
+  State<ReportPage> createState() => _ReportPageState();
 }
 
 class _ReportPageState extends State<ReportPage> {
-  GoogleMapController? _mapController;
-  LatLng? _selectedLocation;
-  final Set<Marker> _markers = {};
+  LatLng? _initialCameraPosition;
+  bool _locationServiceEnabled = false;
+  bool _locationPermissionGranted = false;
+  bool _isLoading = true;
+  Marker? _selectedMarker;
+  String _selectedAddress = '';
 
-  void _chooseLocation() async {
-    // Check location permissions
+  TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _getLocationPermission();
+  }
+
+  Future<void> _getLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      Fluttertoast.showToast(msg: 'Location services are disabled');
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        // Permissions are denied, show an alert dialog
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Location Permission'),
-              content: Text(
-                  'Location permissions are denied. Please enable them in settings.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
+        Fluttertoast.showToast(msg: 'Location permissions are denied');
+        setState(() {
+          _isLoading = false;
+        });
         return;
       }
     }
 
-    // Get the current location
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+    if (permission == LocationPermission.deniedForever) {
+      Fluttertoast.showToast(
+          msg: 'Location permissions are permanently denied');
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
 
-    // Open the map and allow the user to drop a pin
     setState(() {
-      _selectedLocation = LatLng(position.latitude, position.longitude);
-      _markers.add(
-        Marker(
-          markerId: MarkerId('selectedLocation'),
-          position: _selectedLocation!,
-          draggable: true,
-          onDragEnd: (newPosition) {
-            setState(() {
-              _selectedLocation = newPosition;
-            });
-          },
-        ),
-      );
+      _locationServiceEnabled = serviceEnabled;
+      _locationPermissionGranted = permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
     });
 
-    _mapController
-        ?.animateCamera(CameraUpdate.newLatLngZoom(_selectedLocation!, 14.0));
+    if (_locationPermissionGranted) {
+      await _getCurrentLocation();
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+      setState(() {
+        _initialCameraPosition = LatLng(position.latitude, position.longitude);
+        _isLoading = false;
+      });
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Failed to get current location');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _getAddressFromLatLng(LatLng position) async {
+    try {
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(position.latitude, position.longitude);
+      if (placemarks.isNotEmpty) {
+        Placemark placemark = placemarks.first;
+        setState(() {
+          _selectedAddress =
+              '${placemark.name}, ${placemark.locality}, ${placemark.administrativeArea}, ${placemark.country}';
+          _searchController.text = _selectedAddress;
+        });
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Failed to get address');
+    }
+  }
+
+  void _onMapTapped(LatLng position) {
+    setState(() {
+      _selectedMarker = Marker(
+        markerId: MarkerId('selected_location'),
+        position: position,
+      );
+    });
+    _getAddressFromLatLng(position);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Report Page'),
+        title: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(hintText: 'Search here...'),
+          readOnly: true,
+        ),
       ),
-      body: Column(
-        children: [
-          ElevatedButton(
-            onPressed: _chooseLocation,
-            child: Text('Choose Location'),
-          ),
-          Expanded(
-            child: GoogleMap(
-              onMapCreated: (controller) => _mapController = controller,
-              initialCameraPosition: CameraPosition(
-                target: LatLng(37.7749, -122.4194), // Default location
-                zoom: 12.0,
-              ),
-              markers: _markers,
-            ),
-          ),
-        ],
-      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _locationServiceEnabled && _locationPermissionGranted
+              ? GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: _initialCameraPosition!,
+                    zoom: 14,
+                  ),
+                  myLocationEnabled: true,
+                  myLocationButtonEnabled: true,
+                  markers: _selectedMarker != null ? {_selectedMarker!} : {},
+                  onTap: _onMapTapped,
+                )
+              : Center(
+                  child: Text('Location permissions are not granted'),
+                ),
     );
   }
 }

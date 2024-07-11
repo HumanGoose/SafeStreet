@@ -13,6 +13,9 @@
         android:label="safestreet"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <meta-data android:name="com.google.android.geo.API_KEY"
+               android:value="AIzaSyDHbXQWMe2xNwJiyaLRlWH4B0WdE9dyc-E"/>
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
