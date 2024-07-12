@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:safestreet/services/database_service.dart';
+import 'package:safestreet/models/reports.dart'; // Add this import
 
 class ReportPage extends StatefulWidget {
   const ReportPage({Key? key}) : super(key: key);
@@ -24,6 +27,8 @@ class _ReportPageState extends State<ReportPage> {
     'Stalking': false,
     'No Streetlamps': false,
   };
+
+  final DatabaseService _databaseService = DatabaseService();
 
   @override
   void initState() {
@@ -111,6 +116,7 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   void _submitReport() {
+    sendDataToDb();
     setState(() {
       _showReportCard = false;
     });
@@ -205,5 +211,31 @@ class _ReportPageState extends State<ReportPage> {
         ],
       ),
     );
+  }
+
+  void sendDataToDb() {
+    if (_selectedLatLng == null) {
+      Fluttertoast.showToast(msg: 'No location selected');
+      return;
+    }
+
+    // Convert _selectedLatLng to GeoPoint
+    GeoPoint geoPoint =
+        GeoPoint(_selectedLatLng!.latitude, _selectedLatLng!.longitude);
+
+    // Prepare the selected report types
+    String selectedReportTypes = _reportOptions.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .join(', ');
+
+    // Create a Reports object
+    Reports report = Reports(
+      location: geoPoint,
+      type: selectedReportTypes,
+    );
+
+    // Store data in Firestore using DatabaseService
+    _databaseService.addReport(report);
   }
 }

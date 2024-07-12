@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'contacts_page.dart';
 import 'sos_page.dart';
 import 'report_page.dart';
+import 'stree_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -130,38 +131,11 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// class ReportPage extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(
-//       child: Text('Report Page'),
-//     );
-//   }
-// }
-
 class MapPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Text('Map Page'),
-    );
-  }
-}
-
-// class SosPage extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Center(
-//       child: Text('SOS Page'),
-//     );
-//   }
-// }
-
-class StreePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Stree Page'),
     );
   }
 }
