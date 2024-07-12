@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:safestreet/services/database_service.dart';
-import 'package:safestreet/models/reports.dart'; // Add this import
+import 'package:safestreet/models/reports.dart';
 
 class ReportPage extends StatefulWidget {
   const ReportPage({Key? key}) : super(key: key);
@@ -29,11 +29,13 @@ class _ReportPageState extends State<ReportPage> {
   };
 
   final DatabaseService _databaseService = DatabaseService();
+  Set<Circle> _reportCircles = {};
 
   @override
   void initState() {
     super.initState();
     _getLocationPermission();
+    _initializeRealTimeUpdates();
   }
 
   Future<void> _getLocationPermission() async {
@@ -92,9 +94,11 @@ class _ReportPageState extends State<ReportPage> {
       });
     } catch (e) {
       Fluttertoast.showToast(msg: 'Failed to get current location');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -109,6 +113,12 @@ class _ReportPageState extends State<ReportPage> {
     });
   }
 
+  @override
+  void dispose() {
+    // Cancel timers, animations, or any ongoing processes
+    super.dispose();
+  }
+
   void _showReportDialog() {
     setState(() {
       _showReportCard = true;
@@ -116,12 +126,88 @@ class _ReportPageState extends State<ReportPage> {
   }
 
   void _submitReport() {
+    if (_reportOptions.values.every((value) => !value)) {
+      Fluttertoast.showToast(msg: 'Please select at least one option');
+      return;
+    }
+
     sendDataToDb();
     setState(() {
       _showReportCard = false;
+      _selectedMarker = null; // Remove the pin after reporting
     });
     Fluttertoast.showToast(
         msg: 'Successfully Reported! Thank you for making the world safer!');
+  }
+
+  void _initializeRealTimeUpdates() {
+    FirebaseFirestore.instance
+        .collection('reports')
+        .snapshots()
+        .listen((snapshot) {
+      List<QueryDocumentSnapshot> documents = snapshot.docs;
+      Map<LatLng, List<GeoPoint>> reportClusters = {};
+
+      for (var doc in documents) {
+        GeoPoint geoPoint = doc['location'];
+        LatLng latLng = LatLng(geoPoint.latitude, geoPoint.longitude);
+
+        // Flag to check if the point was added to an existing cluster
+        bool addedToCluster = false;
+
+        // Check for nearby clusters
+        reportClusters.forEach((existingLatLng, points) {
+          double distance = Geolocator.distanceBetween(
+            latLng.latitude,
+            latLng.longitude,
+            existingLatLng.latitude,
+            existingLatLng.longitude,
+          );
+
+          if (distance < 20) {
+            // Distance threshold in meters
+            points.add(geoPoint);
+            addedToCluster = true;
+          }
+        });
+
+        // If not added to any cluster, create a new cluster
+        if (!addedToCluster) {
+          reportClusters[latLng] = [geoPoint];
+        }
+      }
+
+      // Generate report circles based on clusters
+      _generateReportCircles(reportClusters);
+    });
+  }
+
+  void _generateReportCircles(Map<LatLng, List<GeoPoint>> reportClusters) {
+    Set<Circle> circles = reportClusters.entries.where((entry) {
+      return entry.value.length >=
+          3; // Only include clusters with at least 3 reports
+    }).map((entry) {
+      LatLng position = entry.key;
+      int count = entry.value.length;
+
+      double opacity = (count > 5)
+          ? 1.0
+          : (count * 0.2); // Adjust opacity based on the count
+      double radius = 50; // Fixed radius in meters
+
+      return Circle(
+        circleId: CircleId(position.toString()),
+        center: position,
+        radius: radius, // Fixed radius in meters
+        fillColor: Colors.red.withOpacity(opacity),
+        strokeColor: Colors.red.withOpacity(opacity),
+        strokeWidth: 1,
+      );
+    }).toSet();
+
+    setState(() {
+      _reportCircles = circles;
+    });
   }
 
   @override
@@ -141,6 +227,7 @@ class _ReportPageState extends State<ReportPage> {
                       myLocationButtonEnabled: true,
                       markers:
                           _selectedMarker != null ? {_selectedMarker!} : {},
+                      circles: _reportCircles,
                       onTap: _onMapTapped,
                       onMapCreated: (controller) {
                         _mapController = controller;
@@ -219,23 +306,18 @@ class _ReportPageState extends State<ReportPage> {
       return;
     }
 
-    // Convert _selectedLatLng to GeoPoint
     GeoPoint geoPoint =
         GeoPoint(_selectedLatLng!.latitude, _selectedLatLng!.longitude);
-
-    // Prepare the selected report types
     String selectedReportTypes = _reportOptions.entries
         .where((entry) => entry.value)
         .map((entry) => entry.key)
         .join(', ');
 
-    // Create a Reports object
     Reports report = Reports(
       location: geoPoint,
       type: selectedReportTypes,
     );
 
-    // Store data in Firestore using DatabaseService
     _databaseService.addReport(report);
   }
 }

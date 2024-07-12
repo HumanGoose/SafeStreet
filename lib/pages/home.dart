@@ -6,6 +6,7 @@ import 'contacts_page.dart';
 import 'sos_page.dart';
 import 'report_page.dart';
 import 'stree_page.dart';
+import 'map_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -127,15 +128,6 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-    );
-  }
-}
-
-class MapPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text('Map Page'),
     );
   }
 }
