@@ -8,11 +8,11 @@ class WatsonService {
       : _bot = IbmWatsonAssistant(
           IbmWatsonAssistantAuth(
             assistantId:
-                'de32bb79-ad8d-4212-a734-be46e6d2ded6', // Replace with your actual Assistant ID
+                '', // Replace with your actual Assistant ID
             url:
-                'https://api.au-syd.assistant.watson.cloud.ibm.com/instances/1e655fea-f37f-4152-b729-09251df7e5db ', // Replace with your actual Assistant URL
+                '', // Replace with your actual Assistant URL
             apikey:
-                '97DysCryGNyKZGN5RKzgzqoYuXDSe_fjRNxf5paFNv83', // Replace with your actual API Key
+                '', // Replace with your actual API Key
           ),
         ) {
     _initializeSession();
